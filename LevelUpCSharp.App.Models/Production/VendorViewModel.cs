@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
@@ -39,13 +40,9 @@ namespace LevelUpCSharp.Production
 
         private ObservableCollection<StockItemViewModel> BuildStock(IEnumerable<StockItem> stock)
         {
-            var stockItems = new List<StockItemViewModel>();
-            foreach (var stockItem in stock)
-            {
-                stockItems.Add(new StockItemViewModel(stockItem));
-            }
+            var viewModels = stock.Select(item => new StockItemViewModel(item)).ToArray();
 
-            return new ObservableCollection<StockItemViewModel>(stockItems);
+            return new ObservableCollection<StockItemViewModel>(viewModels);
         }
 
         private void OnProduce()
