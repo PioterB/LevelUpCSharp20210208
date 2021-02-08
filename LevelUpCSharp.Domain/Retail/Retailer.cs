@@ -10,12 +10,13 @@ namespace LevelUpCSharp.Retail
     public class Retailer
     {
         private static Retailer _instance;
-        private readonly IDictionary<SandwichKind, Queue<Sandwich>> _lines;
+        // private readonly IDictionary<SandwichKind, Queue<Sandwich>> _lines;
+        private readonly SandwichesStore _lines;
 
         protected Retailer(string name)
         {
             Name = name;
-            _lines = InitializeLines();
+            _lines = new SandwichesStore();
         }
 
         public static Retailer Instance => _instance ?? (_instance = new Retailer("Build-in"));
@@ -27,15 +28,10 @@ namespace LevelUpCSharp.Retail
 
         public Result<Sandwich> Sell(SandwichKind kind)
         {
-            if (_lines.ContainsKey(kind) == false || _lines[kind].Count == 0)
-            {
-                return Result<Sandwich>.Failed();
-            }
-
-            var sandwich = _lines[kind].Dequeue();
+            var sandwich = _lines[kind];
 
             OnPurchase(DateTimeOffset.Now, sandwich);
-            return Result<Sandwich>.Success(sandwich);
+            return sandwich;
         }
 
         public void Pack(IEnumerable<Sandwich> package, string deliver)
@@ -45,7 +41,7 @@ namespace LevelUpCSharp.Retail
             Dictionary<SandwichKind, int> sums = new Dictionary<SandwichKind, int>();
             foreach (var sandwich in package)
             {
-                _lines[sandwich.Kind].Enqueue(sandwich);
+                _lines.Put(sandwich);
 
                 if (sums.ContainsKey(sandwich.Kind) == false)
                 {
@@ -86,6 +82,16 @@ namespace LevelUpCSharp.Retail
             }
 
             return result;
+        }
+
+        private void LoopSandwiches()
+        {
+            foreach (var sandwich in _lines)
+            {
+                
+            }
+
+            var list = new List<Sandwich>(_lines);
         }
     }
 }
