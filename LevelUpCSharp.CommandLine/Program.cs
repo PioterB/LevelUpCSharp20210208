@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using LevelUpCSharp.Products;
 
 namespace LevelUpCSharp.CommandLine
 {
@@ -25,7 +28,20 @@ namespace LevelUpCSharp.CommandLine
                 /* react on odd */
             }
 
+            if (myNumber % 2 == 1)
+            {
+            }
+
             mySecondNuymbner.IsOdd();
+
+            var sandwiches = new List<Sandwich>();
+            sandwiches
+                .Where(sandwich => sandwich.ExpirationDate > DateTime.Now.AddDays(1))
+                .Where(sandwich => sandwich.IngredientsCount > 2)
+                .ToList()
+                .Count()
+                .IsOdd()
+                .Equals(true);
         }
     }
 

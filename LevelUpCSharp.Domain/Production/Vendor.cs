@@ -88,7 +88,15 @@ namespace LevelUpCSharp.Production
         {
             return kind switch
             {
-                SandwichKind.Beef => ProduceSandwich(kind, DateTimeOffset.Now.AddMinutes(3)),
+                SandwichKind.Beef => new SandwichBuilder()
+                    .Add(new PulledBeef())
+                    .AddAddition(new Lettuce())
+                    .AddAddition(new Onion())
+                    .AddAddition(new Cheese())
+                    .AddTopping(new Mustard())
+                    .AddTopping(new Ketchup())
+                    .Wrap(),
+
                 SandwichKind.Cheese => ProduceSandwich(kind, DateTimeOffset.Now.AddSeconds(90)),
                 SandwichKind.Chicken => ProduceSandwich(kind, DateTimeOffset.Now.AddMinutes(4)),
                 SandwichKind.Pork => ProduceSandwich(kind, DateTimeOffset.Now.AddSeconds(150)),
