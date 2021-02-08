@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using LevelUpCSharp.Collections;
 using LevelUpCSharp.Helpers;
 using LevelUpCSharp.Products;
 
@@ -36,29 +38,14 @@ namespace LevelUpCSharp.Retail
 
         public void Pack(IEnumerable<Sandwich> package, string deliver)
         {
-            /* use linq to create summary, see constructor for expectations */
+            package.ForEach(sandwich => _lines.Put(sandwich));  
+            // or in a old way without lamda expression: package.ForEach(_lines.Put);
 
-            Dictionary<SandwichKind, int> sums = new Dictionary<SandwichKind, int>();
-            foreach (var sandwich in package)
-            {
-                _lines.Put(sandwich);
+            var positions = package
+                .GroupBy(p => p.Kind)
+                .Select(g => new LineSummary(g.Key, g.Count()));
 
-                if (sums.ContainsKey(sandwich.Kind) == false)
-                {
-                    sums.Add(sandwich.Kind, 0);
-                }
-
-                sums[sandwich.Kind]++;
-            }
-
-            var summaryPositions = new List<LineSummary>();
-
-            foreach (var pair in sums)
-            {
-                summaryPositions.Add(new LineSummary(pair.Key, pair.Value));
-            }
-
-            var summary = new PackingSummary(summaryPositions, deliver);
+            var summary = new PackingSummary(positions, deliver);
             OnPacked(summary);
         }
 

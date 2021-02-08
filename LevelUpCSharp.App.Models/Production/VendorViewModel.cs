@@ -40,7 +40,9 @@ namespace LevelUpCSharp.Production
 
         private ObservableCollection<StockItemViewModel> BuildStock(IEnumerable<StockItem> stock)
         {
-            var viewModels = stock.Select(item => new StockItemViewModel(item)).ToArray();
+            var viewModels = stock
+                .Select(item => new StockItemViewModel(item))
+                .ToArray();
 
             return new ObservableCollection<StockItemViewModel>(viewModels);
         }
