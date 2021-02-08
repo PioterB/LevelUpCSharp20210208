@@ -92,12 +92,18 @@ namespace LevelUpCSharp.Production
                     .Add(new PulledBeef())
                     .AddAddition(new Lettuce())
                     .AddAddition(new Onion())
+                    .AddAddition(new Vegetable("carrot"))
+                    .AddAddition(new Vegetable("perslay"))
                     .AddAddition(new Cheese())
                     .AddTopping(new Mustard())
                     .AddTopping(new Ketchup())
                     .Wrap(),
 
-                SandwichKind.Cheese => ProduceSandwich(kind, DateTimeOffset.Now.AddSeconds(90)),
+                SandwichKind.Cheese =>  new SandwichBuilder()
+                    .Add(new Cheese())
+                    .AddAddition(new Cheese())
+                    .AddTopping(new Mustard())
+                    .Wrap(),//ProduceSandwich(kind, DateTimeOffset.Now.AddSeconds(90)),
                 SandwichKind.Chicken => ProduceSandwich(kind, DateTimeOffset.Now.AddMinutes(4)),
                 SandwichKind.Pork => ProduceSandwich(kind, DateTimeOffset.Now.AddSeconds(150)),
                 _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
@@ -108,5 +114,17 @@ namespace LevelUpCSharp.Production
         {
             return new Sandwich(kind, addMinutes);
         }
+    }
+
+    internal class Vegetable : IAddition
+    {
+        public Vegetable(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+
+        public DateTimeOffset ExpirationDate { get; }
     }
 }
