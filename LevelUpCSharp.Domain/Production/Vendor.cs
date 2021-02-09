@@ -6,13 +6,15 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using LevelUpCSharp.Collections;
 using LevelUpCSharp.Products;
 
 namespace LevelUpCSharp.Production
 {
     public class Vendor
     {
-        private Thread _worker;
+        private Task _worker;
         private readonly ConcurrentQueue<Sandwich> _warehouse = new ConcurrentQueue<Sandwich>();
         private bool _upAndRunning = true;
         private readonly ConcurrentQueue<ProductionRequest> _requests = new ConcurrentQueue<ProductionRequest>();
@@ -21,7 +23,7 @@ namespace LevelUpCSharp.Production
         {
             Name = name;
 
-            _worker = new Thread(Production);
+            _worker = new Task(Production, TaskCreationOptions.LongRunning);
             _worker.Start();
         }
 
@@ -114,27 +116,22 @@ namespace LevelUpCSharp.Production
             while (isRunning)
             {
                 var type = (SandwichKind)randomGenerator.Next(1, 4);
-                var newSandwich = Produce(type);
-                _warehouse.Enqueue(newSandwich);
+                var producer = Task.Delay(TimeSpan.FromSeconds(2)).ContinueWith(_ => DoBatch(new ProductionRequest(type, 1)));
 
-                IEnumerable<ProductionRequest> pendingRequests = Array.Empty<ProductionRequest>();
                 if (round == 0)
                 {
                     ProductionRequest request;
-                    _requests.TryDequeue(out request);
-                    pendingRequests = new[] {request};
-                }
-
-                foreach (var productionRequest in pendingRequests)
-                {
-                    Console.WriteLine("[V: {0}] processing orders...", Name);
-
-                    for (int i = 0; i < productionRequest.Count; i++)
+                    if (_requests.TryDequeue(out request))
                     {
-                        var requested = Produce(productionRequest.Kind);
-                        _warehouse.Enqueue(requested);
+                        var orderExecutor = Task.Factory.StartNew(() => DoBatch(request));
+
+                        var fromOrder = orderExecutor.Result;
+                        fromOrder.ForEach(s => _warehouse.Enqueue(s));
                     }
                 }
+
+                var sandwiches = producer.Result;
+                sandwiches.ForEach(s => _warehouse.Enqueue(s));
 
                 lock (this)
                 {
@@ -145,6 +142,20 @@ namespace LevelUpCSharp.Production
 
                 Thread.Sleep(TimeSpan.FromSeconds(1));
             }
+        }
+
+        private IEnumerable<Sandwich> DoBatch(ProductionRequest productionRequest)
+        {
+            List<Sandwich> result = new List<Sandwich>(productionRequest.Count);
+            for (int i = 0; i < productionRequest.Count; i++)
+            {
+                var requested = Produce(productionRequest.Kind);
+                result.Add(requested);
+            }
+
+            Console.WriteLine("[V: {0}] Batch made: {1} of {2}", Name, productionRequest.Count, productionRequest.Kind);
+
+            return result;
         }
 
         private Sandwich Produce(SandwichKind kind)
@@ -172,7 +183,7 @@ namespace LevelUpCSharp.Production
                 _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
             };
 
-            Console.WriteLine("[V: {0}] sandwich {1} made ", Name, result.Kind);
+            // Console.WriteLine("[V: {0}] sandwich {1} made ", Name, result.Kind);
 
             return result;
         }

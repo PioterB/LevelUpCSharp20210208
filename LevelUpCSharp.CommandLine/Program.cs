@@ -16,23 +16,23 @@ namespace LevelUpCSharp.CommandLine
     {
         static void Main(string[] args)
         {
-            //var vendor = new Vendor("Piotrek");
+            var vendor = new Vendor("Piotrek");
 
-            //ConsoleKeyInfo key;
-            //do
-            //{
-            //    key = Console.ReadKey(true);
-            //    switch (key.Key)
-            //    {
-            //        case ConsoleKey.O: vendor.Order(SandwichKind.Beef, 2); break;
-            //    }
+            ConsoleKeyInfo key;
+            do
+            {
+                key = Console.ReadKey(true);
+                switch (key.Key)
+                {
+                    case ConsoleKey.O: vendor.Order(SandwichKind.Beef, 2); break;
+                }
 
-            //} while (key.Key != ConsoleKey.B);
+            } while (key.Key != ConsoleKey.B);
 
 
-            //vendor.Shutdown();
-            
-            Tasks();
+            vendor.Shutdown();
+
+            //Tasks();
 
             Console.ReadKey(true);
 
