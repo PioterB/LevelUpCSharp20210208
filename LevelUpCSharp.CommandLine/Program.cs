@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.WebSockets;
 using System.Threading;
+using LevelUpCSharp.Production;
 using LevelUpCSharp.Products;
 using LevelUpCSharp.Retail;
 
@@ -12,13 +14,24 @@ namespace LevelUpCSharp.CommandLine
     {
         static void Main(string[] args)
         {
+            var vendor = new Vendor("Piotrek");
+
             ConsoleKeyInfo key;
             do
             {
-                Threads();
                 key = Console.ReadKey(true);
-            } while (key.Key == ConsoleKey.B);
+                switch (key.Key)
+                {
+                    case ConsoleKey.O: vendor.Order(SandwichKind.Beef, 2); break;
+                }
 
+            } while (key.Key != ConsoleKey.B);
+
+
+            vendor.Shutdown();
+            
+            
+            Console.ReadKey(true);
 
             //LinqTest();
 
@@ -55,6 +68,11 @@ namespace LevelUpCSharp.CommandLine
             //    .Count()
             //    .IsOdd()
             //    .Equals(true);
+        }
+
+        private static void Vending()
+        {
+            var v = new Vendor("Piotrek");
         }
 
         private static void LinqTest()
