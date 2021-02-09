@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using LevelUpCSharp.Production;
 using LevelUpCSharp.Products;
 using LevelUpCSharp.Retail;
@@ -14,23 +16,24 @@ namespace LevelUpCSharp.CommandLine
     {
         static void Main(string[] args)
         {
-            var vendor = new Vendor("Piotrek");
+            //var vendor = new Vendor("Piotrek");
 
-            ConsoleKeyInfo key;
-            do
-            {
-                key = Console.ReadKey(true);
-                switch (key.Key)
-                {
-                    case ConsoleKey.O: vendor.Order(SandwichKind.Beef, 2); break;
-                }
+            //ConsoleKeyInfo key;
+            //do
+            //{
+            //    key = Console.ReadKey(true);
+            //    switch (key.Key)
+            //    {
+            //        case ConsoleKey.O: vendor.Order(SandwichKind.Beef, 2); break;
+            //    }
 
-            } while (key.Key != ConsoleKey.B);
+            //} while (key.Key != ConsoleKey.B);
 
 
-            vendor.Shutdown();
+            //vendor.Shutdown();
             
-            
+            Tasks();
+
             Console.ReadKey(true);
 
             //LinqTest();
@@ -139,6 +142,30 @@ namespace LevelUpCSharp.CommandLine
             Console.WriteLine("Modified address: " + address);
         }
 
+        private static void Tasks()
+        {
+            var address = new Address() { Street = "s1", Flat = "f1", Number = "n1" };
+            var address2 = new Address() { Street = "s1", Flat = "f1", Number = "n1" };
+
+            Console.WriteLine("Oryginal address: " + address.ToString());
+
+            var taskWithResult = new Task<Address>(UpdateByTask, address);
+            var task1 = new Task(UpdateValues, address);
+            task1.Start();
+
+            var taskFromFactoryWithoutResult = Task.Factory.StartNew(UpdateValues, address);
+            var taskFromFactoryWithResult = Task.Factory.StartNew<Address>(UpdateByTask, address);
+
+            taskWithResult.Start();
+            Console.WriteLine("before result read");
+
+            var changes = taskWithResult.Result;
+            Console.WriteLine("Oryginal address: " + changes.ToString());
+            Console.WriteLine("Oryginal address: " + changes.ToString());
+            Console.WriteLine("Oryginal address: " + address.ToString());
+
+        }
+
         private static void UpdateValues(object obj)
         {
             var id = Thread.CurrentThread.ManagedThreadId;
@@ -157,6 +184,19 @@ namespace LevelUpCSharp.CommandLine
                 Console.WriteLine(id + " changing flat");
                 adr.Flat += string.Format("[{0}]", id);
             }
+        }
+
+        private static Address UpdateByTask(object obj)
+        {
+            var id = Thread.CurrentThread.ManagedThreadId;
+
+            var adr = (Address)obj;
+            return new Address()
+            {
+                Street = adr.Street + string.Format("[{0}]", id),
+                Number = adr.Number + string.Format("[{0}]", id),
+                Flat = adr.Flat + string.Format("[{0}]", id),
+            };
         }
     }
 
