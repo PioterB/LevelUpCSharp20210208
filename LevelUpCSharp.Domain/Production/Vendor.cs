@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -13,7 +15,7 @@ namespace LevelUpCSharp.Production
         private Thread _worker;
         private readonly List<Sandwich> _warehouse = new List<Sandwich>();
         private bool _upAndRunning = true;
-        private List<ProductionRequest> _requests = new List<ProductionRequest>();
+        private ConcurrentQueue<ProductionRequest> _requests = new ConcurrentQueue<ProductionRequest>();
 
         public Vendor(string name)
         {
@@ -57,10 +59,7 @@ namespace LevelUpCSharp.Production
 
         public void Order(SandwichKind kind, int count)
         {
-            lock (_requests)
-            {
-                _requests.Add(new ProductionRequest(kind, count));
-            }
+            _requests.Enqueue(new ProductionRequest(kind, count));
 
             Console.WriteLine("[V: {0}] new order waits in queue  {1} - {2}", Name, kind, count);
 
@@ -137,11 +136,9 @@ namespace LevelUpCSharp.Production
                 IEnumerable<ProductionRequest> pendingRequests = Array.Empty<ProductionRequest>();
                 if (round == 0)
                 {
-                    lock (_requests)
-                    {
-                        pendingRequests = _requests.ToArray();
-                        _requests.Clear();
-                    }
+                    ProductionRequest request;
+                    _requests.TryDequeue(out request);
+                    pendingRequests = new[] {request};
                 }
 
                 foreach (var productionRequest in pendingRequests)
