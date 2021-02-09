@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using LevelUpCSharp.Collections;
 using LevelUpCSharp.Products;
@@ -41,6 +42,11 @@ namespace LevelUpCSharp.Retail
         public void Put(Sandwich item)
         {
             _totalCount++;
+            if (_lines.ContainsKey(item.Kind) == false)
+            {
+                _lines.Add(item.Kind, new Queue<Sandwich>());
+            }
+
             _lines[item.Kind].Enqueue(item);
         }
 

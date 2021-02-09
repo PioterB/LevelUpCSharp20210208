@@ -43,7 +43,8 @@ namespace LevelUpCSharp.Retail
 
             var positions = package
                 .GroupBy(p => p.Kind)
-                .Select(g => new LineSummary(g.Key, g.Count()));
+                .Select(g => new LineSummary(g.Key, g.Count()))
+                .ToArray();
 
             var summary = new PackingSummary(positions, deliver);
             OnPacked(summary);
