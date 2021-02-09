@@ -13,9 +13,9 @@ namespace LevelUpCSharp.Production
     public class Vendor
     {
         private Thread _worker;
-        private readonly List<Sandwich> _warehouse = new List<Sandwich>();
+        private readonly ConcurrentQueue<Sandwich> _warehouse = new ConcurrentQueue<Sandwich>();
         private bool _upAndRunning = true;
-        private ConcurrentQueue<ProductionRequest> _requests = new ConcurrentQueue<ProductionRequest>();
+        private readonly ConcurrentQueue<ProductionRequest> _requests = new ConcurrentQueue<ProductionRequest>();
 
         public Vendor(string name)
         {
@@ -31,30 +31,20 @@ namespace LevelUpCSharp.Production
 
         public IEnumerable<Sandwich> Buy(int howMuch = 0)
         {
-            lock (_warehouse)
+            var toSell = new List<Sandwich>();
+            for (int i = 0; i < howMuch; i++)
             {
-                if (_warehouse.Count == 0)
+                Sandwich taken;
+                var wasFound = _warehouse.TryDequeue(out taken);
+                if (wasFound == false)
                 {
-                    return Array.Empty<Sandwich>();
+                    break;
                 }
 
-                if (howMuch == 0 || _warehouse.Count <= howMuch)
-                {
-                    var result = _warehouse.ToArray();
-                    _warehouse.Clear();
-                    return result;
-                }
-
-                var toSell = new List<Sandwich>();
-                for (int i = 0; i < howMuch; i++)
-                {
-                    var first = _warehouse[0];
-                    toSell.Add(first);
-                    _warehouse.Remove(first);
-                }
-
-                return toSell; 
+                toSell.Add(taken);
             }
+
+            return toSell;
         }
 
         public void Order(SandwichKind kind, int count)
@@ -83,12 +73,9 @@ namespace LevelUpCSharp.Production
                 {SandwichKind.Pork, 0},
             };
 
-            lock (_warehouse)
+            foreach (var sandwich in _warehouse.ToArray())
             {
-                foreach (var sandwich in _warehouse)
-                {
-                    counts[sandwich.Kind] += 1;
-                }
+                counts[sandwich.Kind] += 1;
             }
 
             var result = new StockItem[counts.Count];
@@ -128,10 +115,7 @@ namespace LevelUpCSharp.Production
             {
                 var type = (SandwichKind)randomGenerator.Next(1, 4);
                 var newSandwich = Produce(type);
-                lock (_warehouse)
-                {
-                    _warehouse.Add(newSandwich);
-                }
+                _warehouse.Enqueue(newSandwich);
 
                 IEnumerable<ProductionRequest> pendingRequests = Array.Empty<ProductionRequest>();
                 if (round == 0)
@@ -148,10 +132,7 @@ namespace LevelUpCSharp.Production
                     for (int i = 0; i < productionRequest.Count; i++)
                     {
                         var requested = Produce(productionRequest.Kind);
-                        lock (_warehouse)
-                        {
-                            _warehouse.Add(requested);
-                        }
+                        _warehouse.Enqueue(requested);
                     }
                 }
 
