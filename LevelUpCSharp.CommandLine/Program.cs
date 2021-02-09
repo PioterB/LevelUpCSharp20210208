@@ -166,6 +166,30 @@ namespace LevelUpCSharp.CommandLine
 
         }
 
+        private  static  async void TasksWithAsync()
+        {
+            var address = new Address() { Street = "s1", Flat = "f1", Number = "n1" };
+            var address2 = new Address() { Street = "s1", Flat = "f1", Number = "n1" };
+
+            Console.WriteLine("Oryginal address: " + address.ToString());
+
+            var taskWithResult = new Task<Address>(UpdateByTask, address);
+
+            var taskFromFactoryWithoutResult = Task.Factory.StartNew(UpdateValues, address);
+            var taskFromFactoryWithResult = Task.Factory.StartNew<Address>(UpdateByTask, address);
+
+            
+            taskWithResult.Start();
+            Console.WriteLine("before result read");
+            
+            var changes = await taskFromFactoryWithResult;
+            await taskFromFactoryWithoutResult;
+
+            Console.WriteLine("Oryginal address: " + changes.ToString());
+            Console.WriteLine("Oryginal address: " + address.ToString());
+
+        }
+
         private static void UpdateValues(object obj)
         {
             var id = Thread.CurrentThread.ManagedThreadId;

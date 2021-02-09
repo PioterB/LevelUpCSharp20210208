@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using LevelUpCSharp.Collections;
 using LevelUpCSharp.Helpers;
 using LevelUpCSharp.Products;
@@ -28,25 +29,29 @@ namespace LevelUpCSharp.Retail
 
         public string Name { get; }
 
-        public Result<Sandwich> Sell(SandwichKind kind)
+        public Task<Result<Sandwich>> Sell(SandwichKind kind)
         {
-            var sandwich = _lines[kind];
+            var sandwich =  _lines[kind];
 
             OnPurchase(DateTimeOffset.Now, sandwich);
-            return sandwich;
+            return Task.Factory.StartNew<Result<Sandwich>>(() => _lines[kind]);
         }
 
-        public void Pack(IEnumerable<Sandwich> package, string deliver)
+        public async void Pack(IEnumerable<Sandwich> package, string deliver)
         {
-            package.ForEach(sandwich => _lines.Put(sandwich));  
-            // or in a old way without lamda expression: package.ForEach(_lines.Put);
+            var summary = await Task.Factory.StartNew<PackingSummary>(() =>
+            {
+                package.ForEach(sandwich => _lines.Put(sandwich));
+                // or in a old way without lamda expression: package.ForEach(_lines.Put);
 
-            var positions = package
-                .GroupBy(p => p.Kind)
-                .Select(g => new LineSummary(g.Key, g.Count()))
-                .ToArray();
+                var positions = package
+                    .GroupBy(p => p.Kind)
+                    .Select(g => new LineSummary(g.Key, g.Count()))
+                    .ToArray();
 
-            var summary = new PackingSummary(positions, deliver);
+                return new PackingSummary(positions, deliver);
+            });
+
             OnPacked(summary);
         }
 
